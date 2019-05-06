@@ -1,5 +1,7 @@
 package gui;
 
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.StringSelection;
 import java.net.URL;
 import java.util.Map;
 import java.util.ResourceBundle;
@@ -16,11 +18,12 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import model.entities.SrqNfce;
+import model.exceptions.Exceptions;
 import model.exceptions.ValidationException;
 import model.service.SrqNfceService;
 
 public class ChaveNFCEController implements Initializable {
-
+		
 	private SrqNfce entity;
 	
 	private SrqNfceService service;
@@ -32,31 +35,49 @@ public class ChaveNFCEController implements Initializable {
 	private TextField txtSerie;
 	
 	@FXML
+	private TextField txtValor;
+	
+	@FXML
 	private TextField txtChave;
 	
 	@FXML
 	private Button btProcurar;
 	
+	@FXML
+	private Button btCopiarChave;
+	
 	@FXML Label labelError;
 	
 	@FXML
 	public void onBtProcurarAction() {
-		//if (entity == null)
-			//throw new IllegalStateException("Entity was null");
-		//if (service == null)
-		//	throw new IllegalStateException("Service was null");
+		/*
+		if (entity == null)
+			throw new IllegalStateException("Entity was null");
+		if (service == null)
+			throw new IllegalStateException("Service was null");
+		 */
 
 		try {
-			entity = getFormData();
-			
-			SrqNfce obj = service.findByNumeroAndSerie(entity);
-			
+			SrqNfce obj = getFormData();
+			obj = service.findByNumeroAndSerie(entity);
+		
+			txtNumero.setText("");
+			txtSerie.setText("");
+			txtValor.setText(String.valueOf("R$ " + obj.getValor()));
 			txtChave.setText(obj.getChave());
+			labelError.setText("");
 		} catch (ValidationException e) {
 			setErrorMessages(e.getErrors());
 		} catch (DbException e) {
-			Alerts.showAlert("Error saving object", null, e.getMessage(), AlertType.ERROR);
+			Alerts.showAlert("Erro ao acessar banco de dados", null, e.getMessage(), AlertType.ERROR);
+		} catch (NullPointerException e) {
+			labelError.setText("Nenhuma nota encontrada!");
 		}
+	}
+	
+	public void onBtCopiarChaveAction() {
+		Clipboard board = java.awt.Toolkit.getDefaultToolkit().getSystemClipboard();
+		board.setContents(new StringSelection(txtChave.getText()), null);
 	}
 	
 	public void setSrqNfce(SrqNfce entity) {
@@ -68,25 +89,35 @@ public class ChaveNFCEController implements Initializable {
 	}
 	
 	private SrqNfce getFormData() {
-		entity = new SrqNfce();
-
-		ValidationException exception = new ValidationException("Validation error");
-
-		if (txtNumero.getText() == null || txtNumero.getText().trim().equals(""))
-			exception.addError("numero", "Field can't be empty");
-		
-		if (txtSerie.getText() == null || txtSerie.getText().trim().equals("")) {
-			exception.addError("serie", "Field can't be empty");
+		try {
+			entity = new SrqNfce();
+			service = new SrqNfceService();
+	
+			ValidationException exception = new ValidationException("Validation error");
+	
+			if (txtNumero.getText() == null || txtNumero.getText().trim().equals("")) {
+				exception.addError("numero", "Número não pode ser vazio!");
+			}
+			else if (txtSerie.getText() == null || txtSerie.getText().trim().equals("")) {
+				exception.addError("serie", "Série não pode ser vazio!");
+			}
+	
+			
+			if (exception.getErrors().size() > 0) {
+				throw exception;
+			}
+			
+	
+			entity.setNumero(Utils.tryParseToInt(txtNumero.getText()));
+			entity.setSerie(Utils.tryParseToInt(txtSerie.getText()));
+			return entity;
 		}
-		
-		entity.setNumero(Utils.tryParseToInt(txtNumero.getText()));
-		entity.setSerie(Utils.tryParseToInt(txtSerie.getText()));
-
-		if (exception.getErrors().size() > 0) {
-			throw exception;
+		catch (Exceptions e) {
+			labelError.setText(e.getMessage());
+			entity.setNumero(0);
+			entity.setSerie(0);
+			return entity;
 		}
-
-		return entity;
 	}
 	
 	@Override
@@ -106,7 +137,15 @@ public class ChaveNFCEController implements Initializable {
 	private void setErrorMessages(Map<String, String> errors) {
 		Set<String> fields = errors.keySet();
 
-		if (fields.contains("name"))
-			labelError.setText(errors.get("name"));
+		if (fields.contains("numero")) {
+			labelError.setText(errors.get("numero"));
+			txtNumero.requestFocus();
+		}
+		
+		if (fields.contains("serie")) {
+			labelError.setText(errors.get("serie"));
+			txtSerie.requestFocus();
+		}
+		
 	}
 }

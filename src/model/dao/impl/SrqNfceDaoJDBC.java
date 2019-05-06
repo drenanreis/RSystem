@@ -23,8 +23,8 @@ public class SrqNfceDaoJDBC implements SrqNfceDao {
 		PreparedStatement st = null;
 		ResultSet rs = null;
 		try {
-			st = conn.prepareStatement("SELECT * FROM department WHERE Id = ? ?");
-			st.setInt(1, numero);
+			st = conn.prepareStatement("SELECT SERIE_NFCE, CHAVE_NFCE, VPROD_NFCE FROM SRQNFCE WHERE CHAVE_NFCE LIKE ? AND SERIE_NFCE = ?");
+			st.setString(1, String.valueOf("%" + numero + "%"));
 			st.setInt(2, serie);
 			rs = st.executeQuery();
 			if (rs.next()) {
@@ -43,10 +43,9 @@ public class SrqNfceDaoJDBC implements SrqNfceDao {
 	private SrqNfce instantiatSrqNfce(ResultSet rs) throws SQLException {
 		SrqNfce obj = new SrqNfce();
 		new SrqNfce();
-		obj.setNumero(rs.getInt("Id"));
-		obj.setSerie(rs.getInt("Name"));
-		obj.setChave(rs.getString("Name"));
-		obj.setValor(rs.getDouble("Valor"));
+		obj.setSerie(rs.getInt("SERIE_NFCE"));
+		obj.setChave(rs.getString("CHAVE_NFCE"));
+		obj.setValor(rs.getDouble("VPROD_NFCE"));
 		return obj;
 	}
 }

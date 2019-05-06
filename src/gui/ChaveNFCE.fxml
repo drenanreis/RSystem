@@ -23,6 +23,7 @@
             <Label layoutX="35.0" layoutY="130.0" text="Chave:" />
             <TextField fx:id="txtChave" layoutX="89.0" layoutY="126.0" prefHeight="25.0" prefWidth="293.0" />
             <Button fx:id="btProcurar" layoutX="90.0" layoutY="92.0" mnemonicParsing="false" onAction="#onBtProcurarAction" prefHeight="25.0" prefWidth="293.0" text="Procurar" />
+            <Label fx:id="labelError" layoutX="89.0" layoutY="157.0" textFill="RED" />
          </children>
       </Pane>
    </children>
